@@ -1,0 +1,63 @@
+
+#install.packages("read.xl")
+#install.packages("dplyr")
+#install.packages("ggplot2")
+
+library("readxl")
+library("dplyr")
+library("ggplot2")
+
+#Loading Data
+data = as.data.frame(read_excel("___"
+                                , sheet = "Sheet1", range = "A1:I17"))
+
+#Summary Statistics
+summary(data)
+
+#Changing Type of Data
+data$STI = as.numeric(data$STI)
+data$LTI = as.numeric(data$LTI)
+
+#Renaming Columns
+colnames(data)[colnames(data) == 'Enterprise Value'] = "EV"
+colnames(data)[colnames(data) == 'Revenues'] = "Rev"
+colnames(data)[colnames(data) == 'Market Cap'] = "MCap"
+
+#Manipulating NA to dashes
+replace(data, is.na(data), "-")
+
+#Subset dashes out
+sub_data = subset(data, data$STI != "-")
+
+#Summary Statistics / Graphics
+summary(data)
+
+ggplot(data = data, aes(x = data$TFR, y = data$`Net Assets`))+
+  geom_point()+
+  labs(x = "TFR", y = "Net Assets")
+  scale_x_continuous(breaks = seq(0, max(data$`Net Assets`, 500000)), labels = scales::dollar)
+  
+
+ggplot(data = data, aes(x = data$STI, y = data$`MCap`))+
+  geom_point()+
+  labs(x = "STI", y = "MCap")
+
+#TFR Reg
+TFR_reg = lm(data$TFR ~ data$`Net Assets` + data$EV + data$MCap + data$Rev, na.action = na.omit, data = data)
+summary(TFR_reg)
+plot(TFR_reg)
+
+#STI Reg
+STI_reg = lm(sub_data$STI ~ sub_data$`Net Assets` + sub_data$EV + sub_data$MCap + sub_data$Rev, na.action = na.omit, data = sub_data)
+summary(STI_reg)
+plot(STI_reg)
+
+#LTI Reg
+LTI_reg = lm(sub_data$LTI ~ sub_data$`Net Assets` + sub_data$EV + sub_data$MCap + sub_data$Rev, na.action = na.omit, data = sub_data)
+summary(LTI_reg)
+plot(LTI_reg)
+
+#TR Reg
+TR_reg = lm(data$TR ~ data$`Net Assets` + data$EV + data$MCap + data$Rev)
+summary(TR_reg)
+plot(TR_reg)
